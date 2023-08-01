@@ -1,3 +1,4 @@
+// Library Includes
 #include <PubSubClient.h>
 #include <Ethernet.h>
 #include <SPI.h>
@@ -298,7 +299,7 @@ public:
   void setDefaultValue();
   void setValueOnManualToAuto();
   void printValue();
-  void controller(uint8_t *, const uint8_t *, const char *, unsigned long);
+  void controller(uint8_t *, const uint8_t *, const char *, float *, unsigned long);
   void controller(uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
   void controller(uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
   void controller(uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
@@ -358,13 +359,13 @@ void InitializeEthernet()
 
 void OutputConfig()
 {
-  for (auto x : output)
+  for (uint8_t i = 0; i < (sizeof(output) / sizeof(output[0])); i++)
   {
-    pinMode(x, OUTPUT);
+    pinMode(output[i], OUTPUT);
   }
-  for (auto x : output)
+  for (uint8_t i = 0; i < (sizeof(output) / sizeof(output[0])); i++)
   {
-    digitalWrite(x, OFF);
+    digitalWrite(output[i], OFF);
   }
 }
 
@@ -786,7 +787,7 @@ void AutomaticControl()
   // /**********************************************************************************************************/
 
   /************************************ MainRoom Light single Output ****************************************/
-  device[10].controller(&mainRoom_sensor_status, &mainRoomLight, mainRoomLight_topic, deviceDelay);
+  device[10].controller(&mainRoom_sensor_status, &mainRoomLight, mainRoomLight_topic, &luxSensor0_data_mQTT, deviceDelay);
   /**********************************************************************************************************/
 
   /************************************ WashRoom0 single Output *********************************************/
@@ -1131,12 +1132,12 @@ Automation::~Automation()
   Serial.println(F("Destructor Called..."));
 }
 
-void Automation::controller(uint8_t *sensorStatus0, const uint8_t *outputPin, const char *topic, unsigned long waitTimeInMinute)
+void Automation::controller(uint8_t *sensorStatus0, const uint8_t *outputPin, const char *topic, float *luxSensorValue, unsigned long waitTimeInMinute)
 {
   waitTime = waitTimeInMinute * secondsInOneMinute * milliSecondsInOneSecond;
   if (!deviceOn)
   {
-    if (*sensorStatus0 == 1 && luxSensor0_data_mQTT < luxSensorThreshold)
+    if ((*sensorStatus0 == 1) && (*luxSensorValue < luxSensorThreshold))
     {
       uint8_t data[1] = {'1'};
       uint8_t *message = data;
@@ -1163,7 +1164,7 @@ void Automation::controller(uint8_t *sensorStatus0, const uint8_t *outputPin, co
   }
   if (keepDeviceOn)
   {
-    if (luxSensor0_data_mQTT >= luxSensorThreshold)
+    if (*luxSensorValue >= luxSensorThreshold)
     {
       if (digitalRead(*outputPin) == OFF)
       {
@@ -1172,13 +1173,15 @@ void Automation::controller(uint8_t *sensorStatus0, const uint8_t *outputPin, co
       }
       if (digitalRead(*outputPin) == ON)
       {
-        digitalWrite(*outputPin, OFF);
+        uint8_t data[1] = {'0'};
+        uint8_t *message = data;
+        mqttClient.publish(topic, message, 1, true);
         keepDeviceOn = false;
         deviceOn = false;
       }
     }
 
-    if (*sensorStatus0 == 0 && (millis() - startWaitTime >= waitTime))
+    if ((*sensorStatus0 == 0) && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
       uint8_t *message = data;
@@ -1432,9 +1435,9 @@ void Automation::printValue()
 
 void InputConfig()
 {
-  for (auto x : input)
+  for (uint8_t i = 0; i < (sizeof(input) / sizeof(input[0])); i++)
   {
-    pinMode(x, INPUT_PULLUP);
+    pinMode(input[i], INPUT_PULLUP);
   }
 }
 

@@ -14,4 +14,7 @@ bool automation = false;
 bool setValueOnAutoTomanualFlag = false;
 bool setValueOnManualToAutoFlag = false;
 
+/*Ethernet Reconnection Flag*/
+uint8_t reconnectCounter = 0;
+
 #endif

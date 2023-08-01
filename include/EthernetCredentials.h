@@ -6,7 +6,4 @@
 uint8_t mac[] = {0xAa, 0xBb, 0xCc, 0xDd, 0xEe, 0xFf};
 uint8_t ip[] = {192, 168, 0, 118};
 
-/*Ethernet Reconnection Flag*/
-uint8_t reconnectCounter = 0;
-
 #endif
