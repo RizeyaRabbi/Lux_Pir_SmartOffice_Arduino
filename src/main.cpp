@@ -4,13 +4,13 @@
 #include <SPI.h>
 
 // Private Includes
-#include <Topics.h>
-#include <EthernetCredentials.h>
-#include <MQTTCredentials.h>
-#include <MQTTData.h>
-#include <Flags.h>
-#include <GPIO.h>
-#include <LogicLevel.h>
+#include "Topics.h"
+#include "EthernetCredentials.h"
+#include "MQTTCredentials.h"
+#include "MQTTData.h"
+#include "Flags.h"
+#include "GPIO.h"
+#include "LogicLevel.h"
 
 /*Reference Variables for relayStatusMQTT[16]*/
 uint8_t &row0_relay0_data_mQTT = relayStatusMQTT[0];
@@ -300,10 +300,10 @@ public:
   void setValueOnManualToAuto();
   void printValue();
   void controller(uint8_t *, const uint8_t *, const char *, float *, unsigned long);
-  void controller(uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
-  void controller(uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
-  void controller(uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
-  void controller(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, unsigned long);
+  void controller(uint8_t *, uint8_t *, const uint8_t *, const char *, float *, unsigned long);
+  void controller(uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, float *, unsigned long);
+  void controller(uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, float *, unsigned long);
+  void controller(uint8_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *, const uint8_t *, const char *, float *, unsigned long);
   ~Automation();
 };
 
@@ -354,18 +354,6 @@ void InitializeEthernet()
   if (Ethernet.linkStatus() == LinkOFF)
   {
     Serial.println(F("Ethernet cable is unplugged or defective"));
-  }
-}
-
-void OutputConfig()
-{
-  for (uint8_t i = 0; i < (sizeof(output) / sizeof(output[0])); i++)
-  {
-    pinMode(output[i], OUTPUT);
-  }
-  for (uint8_t i = 0; i < (sizeof(output) / sizeof(output[0])); i++)
-  {
-    digitalWrite(output[i], OFF);
   }
 }
 
@@ -796,12 +784,12 @@ void AutomaticControl()
 
   // /************************************ WashRoom1 with 2 Output *********************************************/
   // device[12].controller(&washRoom1_sensor0_status, &washRoom1_sensor1_status, &washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_light, washRoom1_light_topic, deviceDelay);
-  // device[13].controller(&washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_exhaust, washRoom1_exhaust_topic, deviceDelay);
+  device[13].controller(&washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_exhaust, washRoom1_exhaust_topic, &luxSensor0_data_mQTT, deviceDelay);
   /**********************************************************************************************************/
 
   // WashRoom0Relay0Controller();
   // WashRoom1Relay0Controller();
-  // WashRoom1Relay1Controller();
+  WashRoom1Relay1Controller();
   MainRoomRelay0Controller();
   // Row0Relay0Controller();
   // Row0Relay1Controller();
@@ -1199,13 +1187,13 @@ void Automation::controller(uint8_t *sensorStatus0, const uint8_t *outputPin, co
   }
 }
 
-void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, const uint8_t *outputPin, const char *topic, unsigned long waitTimeInMinute)
+void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, const uint8_t *outputPin, const char *topic, float *luxSensorValue, unsigned long waitTimeInMinute)
 {
   waitTime = waitTimeInMinute * secondsInOneMinute * milliSecondsInOneSecond;
   UpdateInputPinStatus();
   if (!deviceOn)
   {
-    if (*sensorStatus0 == 1 || *sensorStatus1 == 1)
+    if ((*sensorStatus0 == 1 || *sensorStatus1 == 1) && (*luxSensorValue < luxSensorThreshold))
     {
       uint8_t data[1] = {'1'};
       uint8_t *message = data;
@@ -1232,6 +1220,22 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, cons
   }
   if (keepDeviceOn)
   {
+    if (*luxSensorValue >= luxSensorThreshold)
+    {
+      if (digitalRead(*outputPin) == OFF)
+      {
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+      if (digitalRead(*outputPin) == ON)
+      {
+        uint8_t data[1] = {'0'};
+        uint8_t *message = data;
+        mqttClient.publish(topic, message, 1, true);
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+    }
     if (*sensorStatus0 == 0 && *sensorStatus1 == 0 && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
@@ -1250,13 +1254,13 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, cons
   }
 }
 
-void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint8_t *sensorStatus2, const uint8_t *outputPin, const char *topic, unsigned long waitTimeInMinute)
+void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint8_t *sensorStatus2, const uint8_t *outputPin, const char *topic, float *luxSensorValue, unsigned long waitTimeInMinute)
 {
   waitTime = waitTimeInMinute * secondsInOneMinute * milliSecondsInOneSecond;
   UpdateInputPinStatus();
   if (!deviceOn)
   {
-    if (*sensorStatus0 == 1 || *sensorStatus1 == 1 || *sensorStatus2 == 1)
+    if ((*sensorStatus0 == 1 || *sensorStatus1 == 1 || *sensorStatus2 == 1) && (*luxSensorValue < luxSensorThreshold))
     {
       uint8_t data[1] = {'1'};
       uint8_t *message = data;
@@ -1283,6 +1287,22 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
   }
   if (keepDeviceOn)
   {
+    if (*luxSensorValue >= luxSensorThreshold)
+    {
+      if (digitalRead(*outputPin) == OFF)
+      {
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+      if (digitalRead(*outputPin) == ON)
+      {
+        uint8_t data[1] = {'0'};
+        uint8_t *message = data;
+        mqttClient.publish(topic, message, 1, true);
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+    }
     if (*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
@@ -1301,13 +1321,13 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
   }
 }
 
-void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint8_t *sensorStatus2, uint8_t *sensorStatus3, const uint8_t *outputPin, const char *topic, unsigned long waitTimeInMinute)
+void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint8_t *sensorStatus2, uint8_t *sensorStatus3, const uint8_t *outputPin, const char *topic, float *luxSensorValue, unsigned long waitTimeInMinute)
 {
   waitTime = waitTimeInMinute * secondsInOneMinute * milliSecondsInOneSecond;
   UpdateInputPinStatus();
   if (!deviceOn)
   {
-    if (*sensorStatus0 == 1 || *sensorStatus1 == 1 || *sensorStatus2 == 1 || *sensorStatus3 == 1)
+    if ((*sensorStatus0 == 1 || *sensorStatus1 == 1 || *sensorStatus2 == 1 || *sensorStatus3 == 1) && (*luxSensorValue < luxSensorThreshold))
     {
       uint8_t data[1] = {'1'};
       uint8_t *message = data;
@@ -1334,6 +1354,22 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
   }
   if (keepDeviceOn)
   {
+    if (*luxSensorValue >= luxSensorThreshold)
+    {
+      if (digitalRead(*outputPin) == OFF)
+      {
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+      if (digitalRead(*outputPin) == ON)
+      {
+        uint8_t data[1] = {'0'};
+        uint8_t *message = data;
+        mqttClient.publish(topic, message, 1, true);
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+    }
     if (*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && *sensorStatus3 == 0 && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
@@ -1352,13 +1388,13 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
   }
 }
 
-void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint8_t *sensorStatus2, uint8_t *sensorStatus3, uint8_t *sensorStatus4, const uint8_t *outputPin, const char *topic, unsigned long waitTimeInMinute)
+void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint8_t *sensorStatus2, uint8_t *sensorStatus3, uint8_t *sensorStatus4, const uint8_t *outputPin, const char *topic, float *luxSensorValue, unsigned long waitTimeInMinute)
 {
   waitTime = waitTimeInMinute * secondsInOneMinute * milliSecondsInOneSecond;
   UpdateInputPinStatus();
   if (!deviceOn)
   {
-    if (*sensorStatus0 == 1 || *sensorStatus1 == 1 || *sensorStatus2 == 1 || *sensorStatus3 == 1 || *sensorStatus4 == 1)
+    if ((*sensorStatus0 == 1 || *sensorStatus1 == 1 || *sensorStatus2 == 1 || *sensorStatus3 == 1 || *sensorStatus4 == 1) && (*luxSensorValue < luxSensorThreshold))
     {
       uint8_t data[1] = {'1'};
       uint8_t *message = data;
@@ -1385,7 +1421,23 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
   }
   if (keepDeviceOn)
   {
-    if (*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && *sensorStatus3 == 0 && *sensorStatus4 == 0 && (millis() - startWaitTime >= waitTime))
+    if (*luxSensorValue >= luxSensorThreshold)
+    {
+      if (digitalRead(*outputPin) == OFF)
+      {
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+      if (digitalRead(*outputPin) == ON)
+      {
+        uint8_t data[1] = {'0'};
+        uint8_t *message = data;
+        mqttClient.publish(topic, message, 1, true);
+        keepDeviceOn = false;
+        deviceOn = false;
+      }
+    }
+    if ((*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && *sensorStatus3 == 0 && *sensorStatus4 == 0) && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
       uint8_t *message = data;
@@ -1431,22 +1483,6 @@ void Automation::printValue()
   Serial.print(deviceOn);
   Serial.print(F("\t"));
   Serial.print(keepDeviceOn);
-}
-
-void InputConfig()
-{
-  for (uint8_t i = 0; i < (sizeof(input) / sizeof(input[0])); i++)
-  {
-    pinMode(input[i], INPUT_PULLUP);
-  }
-}
-
-void UpdateInputPinStatus()
-{
-  for (uint8_t i = 0; i < (sizeof(input) / sizeof(input[0])); i++)
-  {
-    input_status[i] = digitalRead(input[i]);
-  }
 }
 
 void ChangeValueOnManualToAuto()
@@ -1511,5 +1547,33 @@ void AllRelayOffButtonHandler()
   {
     Serial.print(F("\n"));
     Serial.print(F("AllRelayOff Button already turned OFF.."));
+  }
+}
+
+void OutputConfig()
+{
+  for (uint8_t i = 0; i < (sizeof(output) / sizeof(output[0])); i++)
+  {
+    pinMode(output[i], OUTPUT);
+  }
+  for (uint8_t i = 0; i < (sizeof(output) / sizeof(output[0])); i++)
+  {
+    digitalWrite(output[i], OFF);
+  }
+}
+
+void InputConfig()
+{
+  for (uint8_t i = 0; i < (sizeof(input) / sizeof(input[0])); i++)
+  {
+    pinMode(input[i], INPUT_PULLUP);
+  }
+}
+
+void UpdateInputPinStatus()
+{
+  for (uint8_t i = 0; i < (sizeof(input) / sizeof(input[0])); i++)
+  {
+    input_status[i] = digitalRead(input[i]);
   }
 }
