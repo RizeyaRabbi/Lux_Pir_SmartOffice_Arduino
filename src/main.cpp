@@ -474,7 +474,6 @@ void Callback(char *topic, uint8_t *payload, unsigned int length)
     }
     luxSensor0_data_mQTT = (float)atof(payLoadBuffer);
   }
-
   else if (strcmp(topic, allRelayOn_topic) == 0)
   {
     if (payloadMessage == 1)
@@ -747,62 +746,60 @@ void AllRelayOffAction()
 
 void AutomaticControl()
 {
-  // device[0].controller(&row0_sensor0_status, &row0_light0, "SmartOffice/2nd_Floor/Output/Row0/Relay0", 1);
+  /************************************ Row0 with 2 Outputs *************************************************/
+  device[0].controller(&row0_sensor0_status, &row0_sensor1_status, &row0_sensor2_status, &row0_sensor3_status, &row0_sensor4_status, &row0_light0, row0_light0_topic, &luxSensor_testValue, deviceDelay);
+  device[1].controller(&row0_sensor5_status, &row0_sensor6_status, &row0_sensor7_status, &row0_sensor8_status, &row0_sensor9_status, &row0_light1, row0_light1_topic, &luxSensor_testValue, deviceDelay);
+  /**********************************************************************************************************/
 
-  // /************************************ Row0 with 2 Outputs *************************************************/
-  // device[0].controller(&row0_sensor0_status, &row0_sensor1_status, &row0_sensor2_status, &row0_sensor3_status, &row0_sensor4_status, &row0_light0, row0_light0_topic, deviceDelay);
-  // device[1].controller(&row0_sensor5_status, &row0_sensor6_status, &row0_sensor7_status, &row0_sensor8_status, &row0_sensor9_status, &row0_light1, row0_light1_topic, deviceDelay);
-  // /**********************************************************************************************************/
+  /************************************ Row1 with 2 Outputs *************************************************/
+  device[2].controller(&row1_sensor0_status, &row1_sensor1_status, &row1_sensor2_status, &row1_sensor3_status, &row1_light0, row1_light0_topic, &luxSensor_testValue, deviceDelay);
+  device[3].controller(&row1_sensor4_status, &row1_sensor5_status, &row1_sensor6_status, &row1_light1, row1_light1_topic, &luxSensor_testValue, deviceDelay);
+  /**********************************************************************************************************/
 
-  // /************************************ Row1 with 2 Outputs *************************************************/
-  // device[2].controller(&row1_sensor0_status, &row1_sensor1_status, &row1_sensor2_status, &row1_sensor3_status, &row1_light0, row1_light0_topic, deviceDelay);
-  // device[3].controller(&row1_sensor4_status, &row1_sensor5_status, &row1_sensor6_status, &row1_light1, row1_light1_topic, deviceDelay);
-  // /**********************************************************************************************************/
+  /************************************ Row2 and Row3 with 2 outputs(Row3) **********************************/
+  device[4].controller(&row2_sensor0_status, &row2_sensor1_status, &row3_sensor0_status, &row3_sensor1_status, &row3_light0, row3_light0_topic, &luxSensor_testValue, deviceDelay);
+  device[5].controller(&row2_sensor2_status, &row2_sensor3_status, &row2_sensor4_status, &row3_sensor2_status, &row3_sensor3_status, &row3_light1, row3_light1_topic, &luxSensor_testValue, deviceDelay);
+  /**********************************************************************************************************/
 
-  // /************************************ Row2 and Row3 with 2 outputs(Row3) **********************************/
-  // device[4].controller(&row2_sensor0_status, &row2_sensor1_status, &row3_sensor0_status, &row3_sensor1_status, &row3_light0, row3_light0_topic, deviceDelay);
-  // device[5].controller(&row2_sensor2_status, &row2_sensor3_status, &row2_sensor4_status, &row3_sensor2_status, &row3_sensor3_status, &row3_light1, row3_light1_topic, deviceDelay);
-  // /**********************************************************************************************************/
+  /************************************ Row4 with 2 Outputs *************************************************/
+  device[6].controller(&row4_sensor0_status, &row4_sensor1_status, &row4_sensor2_status, &row4_light0, row4_light0_topic, &luxSensor_testValue, deviceDelay);
+  device[7].controller(&row4_sensor3_status, &row4_sensor4_status, &row4_sensor5_status, &row4_light1, row4_light1_topic, &luxSensor_testValue, deviceDelay);
+  /**********************************************************************************************************/
 
-  // /************************************ Row4 with 2 Outputs *************************************************/
-  // device[6].controller(&row4_sensor0_status, &row4_sensor1_status, &row4_sensor2_status, &row4_light0, row4_light0_topic, deviceDelay);
-  // device[7].controller(&row4_sensor3_status, &row4_sensor4_status, &row4_sensor5_status, &row4_light1, row4_light1_topic, deviceDelay);
-  // /**********************************************************************************************************/
-
-  // /************************************ Row5 with 2 Outputs *************************************************/
-  // device[8].controller(&row5_sensor0_status, &row5_sensor1_status, &row5_sensor2_status, &row5_light0, row5_light0_topic, deviceDelay);
-  // device[9].controller(&row5_sensor3_status, &row5_sensor4_status, &row5_sensor5_status, &row5_sensor6_status, &row5_light1, row5_light1_topic, deviceDelay);
-  // /**********************************************************************************************************/
+  /************************************ Row5 with 2 Outputs *************************************************/
+  device[8].controller(&row5_sensor0_status, &row5_sensor1_status, &row5_sensor2_status, &row5_light0, row5_light0_topic, &luxSensor_testValue, deviceDelay);
+  device[9].controller(&row5_sensor3_status, &row5_sensor4_status, &row5_sensor5_status, &row5_sensor6_status, &row5_light1, row5_light1_topic, &luxSensor_testValue, deviceDelay);
+  /**********************************************************************************************************/
 
   /************************************ MainRoom Light single Output ****************************************/
   device[10].controller(&mainRoom_sensor_status, &mainRoomLight, mainRoomLight_topic, &luxSensor0_data_mQTT, deviceDelay);
   /**********************************************************************************************************/
 
   /************************************ WashRoom0 single Output *********************************************/
-  // device[11].controller(&washRoom0_sensor0_status, &washRoom0_devices, washRoom0_devices_topic, deviceDelay);
-  // /**********************************************************************************************************/
-
-  // /************************************ WashRoom1 with 2 Output *********************************************/
-  // device[12].controller(&washRoom1_sensor0_status, &washRoom1_sensor1_status, &washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_light, washRoom1_light_topic, deviceDelay);
-  device[13].controller(&washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_exhaust, washRoom1_exhaust_topic, &luxSensor0_data_mQTT, deviceDelay);
+  device[11].controller(&washRoom0_sensor0_status, &washRoom0_devices, washRoom0_devices_topic, &luxSensor_testValue, deviceDelay);
   /**********************************************************************************************************/
 
-  // WashRoom0Relay0Controller();
-  // WashRoom1Relay0Controller();
+  /************************************ WashRoom1 with 2 Output *********************************************/
+  device[12].controller(&washRoom1_sensor0_status, &washRoom1_sensor1_status, &washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_light, washRoom1_light_topic, &luxSensor_testValue, deviceDelay);
+  device[13].controller(&washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_exhaust, washRoom1_exhaust_topic, &luxSensor_testValue, deviceDelay);
+  /**********************************************************************************************************/
+
+  WashRoom0Relay0Controller();
+  WashRoom1Relay0Controller();
   WashRoom1Relay1Controller();
   MainRoomRelay0Controller();
-  // Row0Relay0Controller();
-  // Row0Relay1Controller();
-  // Row1Relay0Controller();
-  // Row1Relay1Controller();
-  // Row2Relay0Controller();
-  // Row2Relay1Controller();
-  // Row3Relay0Controller();
-  // Row3Relay1Controller();
-  // Row4Relay0Controller();
-  // Row4Relay1Controller();
-  // Row5Relay0Controller();
-  // Row5Relay1Controller();
+  Row0Relay0Controller();
+  Row0Relay1Controller();
+  Row1Relay0Controller();
+  Row1Relay1Controller();
+  Row2Relay0Controller();
+  Row2Relay1Controller();
+  Row3Relay0Controller();
+  Row3Relay1Controller();
+  Row4Relay0Controller();
+  Row4Relay1Controller();
+  Row5Relay0Controller();
+  Row5Relay1Controller();
 }
 
 void ManualControl()
@@ -1303,7 +1300,7 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
         deviceOn = false;
       }
     }
-    if (*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && (millis() - startWaitTime >= waitTime))
+    if ((*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0) && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
       uint8_t *message = data;
@@ -1370,7 +1367,7 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
         deviceOn = false;
       }
     }
-    if (*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && *sensorStatus3 == 0 && (millis() - startWaitTime >= waitTime))
+    if ((*sensorStatus0 == 0 && *sensorStatus1 == 0 && *sensorStatus2 == 0 && *sensorStatus3 == 0) && (millis() - startWaitTime >= waitTime))
     {
       uint8_t data[1] = {'0'};
       uint8_t *message = data;

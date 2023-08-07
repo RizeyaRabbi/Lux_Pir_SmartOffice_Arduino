@@ -15,6 +15,7 @@ uint8_t deviceDelay = 1;
 
 // Variable to store lux sensor value
 float luxSensor0_data_mQTT = 0.0;
+float luxSensor_testValue = 0.0;
 
 // Lux Sensor threshold
 float luxSensorThreshold = 80.0;
