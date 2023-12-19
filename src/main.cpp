@@ -2,6 +2,7 @@
 #include <PubSubClient.h>
 #include <Ethernet.h>
 #include <SPI.h>
+#include <ArduinoJson.h>
 
 // Private Includes
 #include "Topics.h"
@@ -11,6 +12,30 @@
 #include "Flags.h"
 #include "GPIO.h"
 #include "LogicLevel.h"
+
+/*Reference Variables for Subscription topic*/
+const char *&row0_light0_topic = subscriptionToics[0];
+const char *&row0_light1_topic = subscriptionToics[1];
+const char *&row1_light0_topic = subscriptionToics[2];
+const char *&row1_light1_topic = subscriptionToics[3];
+const char *&row2_light0_topic = subscriptionToics[4];
+const char *&row2_light1_topic = subscriptionToics[5];
+const char *&row3_light0_topic = subscriptionToics[6];
+const char *&row3_light1_topic = subscriptionToics[7];
+const char *&row4_light0_topic = subscriptionToics[8];
+const char *&row4_light1_topic = subscriptionToics[9];
+const char *&row5_light0_topic = subscriptionToics[10];
+const char *&row5_light1_topic = subscriptionToics[11];
+const char *&mainRoomLight_topic = subscriptionToics[12];
+const char *&washRoom0_devices_topic = subscriptionToics[13];
+const char *&washRoom1_light_topic = subscriptionToics[14];
+const char *&washRoom1_exhaust_topic = subscriptionToics[15];
+const char *&allRelayOn_topic = subscriptionToics[16];
+const char *&allRelayOff_topic = subscriptionToics[17];
+const char *&automation_topic = subscriptionToics[18];
+const char *&pattern_topic = subscriptionToics[19];
+const char *&luxSensor0_topic = subscriptionToics[20];
+const char *&device_delay_topic = subscriptionToics[21];
 
 /*Reference Variables for relayStatusMQTT[16]*/
 uint8_t &row0_relay0_data_mQTT = relayStatusMQTT[0];
@@ -29,6 +54,42 @@ uint8_t &mainRoom_relay0_data_mQTT = relayStatusMQTT[12];
 uint8_t &washRoom0_relay0_data_mQTT = relayStatusMQTT[13];
 uint8_t &washRoom1_relay0_data_mQTT = relayStatusMQTT[14];
 uint8_t &washRoom1_relay1_data_mQTT = relayStatusMQTT[15];
+
+/*Refernce Variables for patternFlag[16]*/
+bool &row0_light0_pattern_flag_mQTT = patternFlag[0];
+bool &row0_light1_pattern_flag_mQTT = patternFlag[1];
+bool &row1_light0_pattern_flag_mQTT = patternFlag[2];
+bool &row1_light1_pattern_flag_mQTT = patternFlag[3];
+bool &row2_light0_pattern_flag_mQTT = patternFlag[4];
+bool &row2_light1_pattern_flag_mQTT = patternFlag[5];
+bool &row3_light0_pattern_flag_mQTT = patternFlag[6];
+bool &row3_light1_pattern_flag_mQTT = patternFlag[7];
+bool &row4_light0_pattern_flag_mQTT = patternFlag[8];
+bool &row4_light1_pattern_flag_mQTT = patternFlag[9];
+bool &row5_light0_pattern_flag_mQTT = patternFlag[10];
+bool &row5_light1_pattern_flag_mQTT = patternFlag[11];
+bool &mainroom_light_pattern_flag_mQTT = patternFlag[12];
+bool &washroom0_devices_pattern_flag_mQTT = patternFlag[13];
+bool &washroom1_light_pattern_flag_mQTT = patternFlag[14];
+bool &washroom1_exhaust_pattern_flag_mQTT = patternFlag[15];
+
+/*Reference variables for pattern manual data*/
+uint8_t &row0_light0_pattern_manual_status = relayStatusPattern[0];
+uint8_t &row0_light1_pattern_manual_status = relayStatusPattern[1];
+uint8_t &row1_light0_pattern_manual_status = relayStatusPattern[2];
+uint8_t &row1_light1_pattern_manual_status = relayStatusPattern[3];
+uint8_t &row2_light0_pattern_manual_status = relayStatusPattern[4];
+uint8_t &row2_light1_pattern_manual_status = relayStatusPattern[5];
+uint8_t &row3_light0_pattern_manual_status = relayStatusPattern[6];
+uint8_t &row3_light1_pattern_manual_status = relayStatusPattern[7];
+uint8_t &row4_light0_pattern_manual_status = relayStatusPattern[8];
+uint8_t &row4_light1_pattern_manual_status = relayStatusPattern[9];
+uint8_t &row5_light0_pattern_manual_status = relayStatusPattern[10];
+uint8_t &row5_light1_pattern_manual_status = relayStatusPattern[11];
+uint8_t &mainroom_light_pattern_manual_status = relayStatusPattern[12];
+uint8_t &washroom0_devices_pattern_manual_status = relayStatusPattern[13];
+uint8_t &washroom1_light_pattern_manual_status = relayStatusPattern[14];
+uint8_t &washroom1_exhaust_pattern_manual_status = relayStatusPattern[15];
 
 /*Reference Variables for relayStatusMQTTFlag[16]*/
 bool &row0_relay0_flag_mQTT = relayStatusMQTTFlag[0];
@@ -221,62 +282,17 @@ void AllRelayOffAction();
 /*Sensor based Automation*/
 void AutomaticControl();
 
-/*Manual Control from Web*/
-void ManualControl();
-
 /*Ethernet client Initialization*/
 EthernetClient ethClient;
 
 /*MQTT client Initialization over Ethernet*/
 PubSubClient mqttClient(ethClient);
 
-/*WashRoom0Relay0 Manual Control Function*/
-void WashRoom0Relay0Controller();
+/* All Relay Controller Function upon MQTT message*/
+void RelayController();
 
-/*WashRoom1Relay0 Manual Control Function*/
-void WashRoom1Relay0Controller();
-
-/*WashRoom1Relay1 Manual Control Function*/
-void WashRoom1Relay1Controller();
-
-/*Row0Relay0 Manual Control Function*/
-void Row0Relay0Controller();
-
-/*Row0Relay1 Manual Control Function*/
-void Row0Relay1Controller();
-
-/*Row1Relay0 Manual Control Function*/
-void Row1Relay0Controller();
-
-/*Row1Relay1 Manual Control Function*/
-void Row1Relay1Controller();
-
-/*Row2Relay0 Manual Control Function*/
-void Row2Relay0Controller();
-
-/*Row0Relay1 Manual Control Function*/
-void Row2Relay1Controller();
-
-/*Row3Relay0 Manual Control Function*/
-void Row3Relay0Controller();
-
-/*Row3Relay1 Manual Control Function*/
-void Row3Relay1Controller();
-
-/*Row4Relay0 Manual Control Function*/
-void Row4Relay0Controller();
-
-/*Row4Relay1 Manual Control Function*/
-void Row4Relay1Controller();
-
-/*Row5Relay0 Manual Control Function*/
-void Row5Relay0Controller();
-
-/*Row5Relay1 Manual Control Function*/
-void Row5Relay1Controller();
-
-/*MainRoomRelay0 Manual control Function*/
-void MainRoomRelay0Controller();
+/*Pattern Controller*/
+void PatternController();
 
 /*Set and reset Value to Objects during RunTime*/
 void ChangeValueOnManualToAuto();
@@ -290,7 +306,7 @@ void AllRelayOffButtonHandler();
 class Automation
 {
 private:
-  unsigned long waitTime, startInterval, startWaitTime, startTime, stopTime, debounceDelay,
+  unsigned long waitTime, startInterval, startWaitTime, startTime, stopTime,
       secondsInOneMinute, milliSecondsInOneSecond;
   bool deviceOn, keepDeviceOn;
 
@@ -310,6 +326,22 @@ public:
 /*Objects for Automation Class*/
 Automation device[16];
 
+/*Class to send PIR sensor data to MQTT server*/
+class PIRtoMQTT
+{
+public:
+  PIRtoMQTT();
+  void sendToMQTT(byte, const char *);
+
+private:
+  boolean _triggered;
+};
+
+PIRtoMQTT pirSensor[45];
+
+/*Continously sends PIR sensor data to MQTT*/
+void sendPirToMQTT();
+
 void setup()
 {
   Serial.begin(9600);
@@ -327,23 +359,14 @@ void loop()
     Reconnect();
   }
   mqttClient.loop();
-  if (automation)
+  // sendPirToMQTT();
+  AutomaticControl();
+  if (patternControllerFlag)
   {
-    UpdateInputPinStatus();
-    AutomaticControl();
-    if (setValueOnManualToAutoFlag)
-    {
-      ChangeValueOnManualToAuto();
-    }
+    PatternController();
+    patternControllerFlag = false;
   }
-  if (!automation)
-  {
-    if (setValueOnAutoTomanualFlag)
-    {
-      ChangeValueOnAutoToManual();
-    }
-    ManualControl();
-  }
+  RelayController();
 }
 
 void InitializeEthernet()
@@ -464,7 +487,6 @@ void InitializeMQTT()
 
 void Callback(char *topic, uint8_t *payload, unsigned int length)
 {
-  uint8_t payloadMessage = *payload - 48;
   if (strcmp(topic, luxSensor0_topic) == 0)
   {
     char payLoadBuffer[length];
@@ -474,16 +496,287 @@ void Callback(char *topic, uint8_t *payload, unsigned int length)
     }
     luxSensor0_data_mQTT = (float)atof(payLoadBuffer);
   }
+  else if (strcmp(topic, device_delay_topic) == 0)
+  {
+    StaticJsonDocument<192> doc;
+    deserializeJson(doc, payload);
+    if (doc["0"] > 0)
+    {
+      individualDelayTime[0] = doc["0"];
+    }
+    if (doc["1"] > 0)
+    {
+      individualDelayTime[1] = doc["1"];
+    }
+    if (doc["2"] > 0)
+    {
+      individualDelayTime[2] = doc["2"];
+    }
+    if (doc["3"] > 0)
+    {
+      individualDelayTime[3] = doc["3"];
+    }
+    if (doc["4"] > 0)
+    {
+      individualDelayTime[4] = doc["4"];
+    }
+    if (doc["5"] > 0)
+    {
+      individualDelayTime[5] = doc["5"];
+    }
+    if (doc["6"] > 0)
+    {
+      individualDelayTime[6] = doc["6"];
+    }
+    if (doc["7"] > 0)
+    {
+      individualDelayTime[7] = doc["7"];
+    }
+    if (doc["8"] > 0)
+    {
+      individualDelayTime[8] = doc["8"];
+    }
+    if (doc["9"] > 0)
+    {
+      individualDelayTime[9] = doc["9"];
+    }
+    if (doc["10"] > 0)
+    {
+      individualDelayTime[10] = doc["10"];
+    }
+    if (doc["11"] > 0)
+    {
+      individualDelayTime[11] = doc["11"];
+    }
+    if (doc["12"] > 0)
+    {
+      individualDelayTime[12] = doc["12"];
+    }
+    if (doc["13"] > 0)
+    {
+      individualDelayTime[13] = doc["13"];
+    }
+    if (doc["14"] > 0)
+    {
+      individualDelayTime[14] = doc["14"];
+    }
+    if (doc["15"] > 0)
+    {
+      individualDelayTime[15] = doc["15"];
+    }
+
+    Serial.print("\n");
+    for (uint8_t i = 0; i < sizeof(individualDelayTime) / sizeof(individualDelayTime[0]); i++)
+    {
+      Serial.print(individualDelayTime[i]);
+      Serial.print("  ");
+    }
+  }
+  else if (strcmp(topic, pattern_topic) == 0)
+  {
+    StaticJsonDocument<192> doc;
+    deserializeJson(doc, payload);
+
+    if (doc["0"] == MANUAL_OFF || doc["0"] == MANUAL_ON)
+    {
+      row0_light0_pattern_flag_mQTT = false;
+      row0_light0_pattern_manual_status = doc["0"];
+      device[0].setDefaultValue();
+    }
+    else if (doc["0"] == AUTOMATION)
+    {
+      row0_light0_pattern_flag_mQTT = true;
+    }
+
+    if (doc["1"] == MANUAL_OFF || doc["1"] == MANUAL_ON)
+    {
+      row0_light1_pattern_flag_mQTT = false;
+      row0_light1_pattern_manual_status = doc["1"];
+      device[1].setDefaultValue();
+    }
+    else if (doc["1"] == AUTOMATION)
+    {
+      row0_light1_pattern_flag_mQTT = true;
+    }
+
+    if (doc["2"] == MANUAL_OFF || doc["2"] == MANUAL_ON)
+    {
+      row1_light0_pattern_flag_mQTT = false;
+      row1_light0_pattern_manual_status = doc["2"];
+      device[2].setDefaultValue();
+    }
+    else if (doc["2"] == AUTOMATION)
+    {
+      row1_light0_pattern_flag_mQTT = true;
+    }
+
+    if (doc["3"] == MANUAL_OFF || doc["3"] == MANUAL_ON)
+    {
+      row1_light1_pattern_flag_mQTT = false;
+      row1_light1_pattern_manual_status = doc["3"];
+      device[3].setDefaultValue();
+    }
+    else if (doc["3"] == AUTOMATION)
+    {
+      row1_light1_pattern_flag_mQTT = true;
+    }
+
+    if (doc["4"] == MANUAL_OFF || doc["4"] == MANUAL_ON)
+    {
+      row2_light0_pattern_flag_mQTT = false;
+      row2_light0_pattern_manual_status = doc["4"];
+      device[4].setDefaultValue();
+    }
+    else if (doc["4"] == AUTOMATION)
+    {
+      row2_light0_pattern_flag_mQTT = true;
+    }
+
+    if (doc["5"] == MANUAL_OFF || doc["5"] == MANUAL_ON)
+    {
+      row2_light1_pattern_flag_mQTT = false;
+      row2_light1_pattern_manual_status = doc["5"];
+      device[5].setDefaultValue();
+    }
+    else if (doc["5"] == AUTOMATION)
+    {
+      row2_light1_pattern_flag_mQTT = true;
+    }
+
+    if (doc["6"] == MANUAL_OFF || doc["6"] == MANUAL_ON)
+    {
+      row3_light0_pattern_flag_mQTT = false;
+      row3_light0_pattern_manual_status = doc["6"];
+      device[6].setDefaultValue();
+    }
+    else if (doc["6"] == AUTOMATION)
+    {
+      row3_light0_pattern_flag_mQTT = true;
+    }
+
+    if (doc["7"] == MANUAL_OFF || doc["7"] == MANUAL_ON)
+    {
+      row3_light1_pattern_flag_mQTT = false;
+      row3_light1_pattern_manual_status = doc["7"];
+      device[7].setDefaultValue();
+    }
+    else if (doc["7"] == AUTOMATION)
+    {
+      row3_light1_pattern_flag_mQTT = true;
+    }
+
+    if (doc["8"] == MANUAL_OFF || doc["8"] == MANUAL_ON)
+    {
+      row4_light0_pattern_flag_mQTT = false;
+      row4_light0_pattern_manual_status = doc["8"];
+      device[8].setDefaultValue();
+    }
+    else if (doc["8"] == AUTOMATION)
+    {
+      row4_light0_pattern_flag_mQTT = true;
+    }
+
+    if (doc["9"] == MANUAL_OFF || doc["9"] == MANUAL_ON)
+    {
+      row4_light1_pattern_flag_mQTT = false;
+      row4_light1_pattern_manual_status = doc["9"];
+      device[9].setDefaultValue();
+    }
+    else if (doc["9"] == AUTOMATION)
+    {
+      row4_light1_pattern_flag_mQTT = true;
+    }
+
+    if (doc["10"] == MANUAL_OFF || doc["10"] == MANUAL_ON)
+    {
+      row5_light0_pattern_flag_mQTT = false;
+      row5_light0_pattern_manual_status = doc["10"];
+      device[10].setDefaultValue();
+    }
+    else if (doc["10"] == AUTOMATION)
+    {
+      row5_light0_pattern_flag_mQTT = true;
+    }
+
+    if (doc["11"] == MANUAL_OFF || doc["11"] == MANUAL_ON)
+    {
+      row5_light1_pattern_flag_mQTT = false;
+      row5_light1_pattern_manual_status = doc["11"];
+      device[11].setDefaultValue();
+    }
+    else if (doc["11"] == AUTOMATION)
+    {
+      row5_light1_pattern_flag_mQTT = true;
+    }
+
+    if (doc["12"] == MANUAL_OFF || doc["12"] == MANUAL_ON)
+    {
+      mainroom_light_pattern_flag_mQTT = false;
+      mainroom_light_pattern_manual_status = doc["12"];
+      device[12].setDefaultValue();
+    }
+    else if (doc["12"] == AUTOMATION)
+    {
+      mainroom_light_pattern_flag_mQTT = true;
+    }
+
+    if (doc["13"] == MANUAL_OFF || doc["13"] == MANUAL_ON)
+    {
+      washroom0_devices_pattern_flag_mQTT = false;
+      washroom0_devices_pattern_manual_status = doc["13"];
+      device[13].setDefaultValue();
+    }
+    else if (doc["13"] == AUTOMATION)
+    {
+      washroom0_devices_pattern_flag_mQTT = true;
+    }
+
+    if (doc["14"] == MANUAL_OFF || doc["14"] == MANUAL_ON)
+    {
+      washroom1_light_pattern_flag_mQTT = false;
+      washroom1_light_pattern_manual_status = doc["14"];
+      device[14].setDefaultValue();
+    }
+    else if (doc["14"] == AUTOMATION)
+    {
+      washroom1_light_pattern_flag_mQTT = true;
+    }
+
+    if (doc["15"] == MANUAL_OFF || doc["15"] == MANUAL_ON)
+    {
+      washroom1_exhaust_pattern_flag_mQTT = false;
+      washroom1_exhaust_pattern_manual_status = doc["15"];
+      device[15].setDefaultValue();
+    }
+    else if (doc["15"] == AUTOMATION)
+    {
+      washroom1_exhaust_pattern_flag_mQTT = true;
+    }
+    patternControllerFlag = true;
+  }
+  else if (strcmp(topic, automation_topic) == 0)
+  {
+    if ((*payload - 48) == 1)
+    {
+      automation = true;
+      setValueOnManualToAutoFlag = true;
+    }
+    if ((*payload - 48) == 0)
+    {
+      automation = false;
+      setValueOnAutoTomanualFlag = true;
+    }
+  }
   else if (strcmp(topic, allRelayOn_topic) == 0)
   {
-    if (payloadMessage == 1)
+    if ((*payload - 48) == 1)
     {
       len = length;
       allRelayOn = true;
       allRelayOnButton = true;
       allRelayOnButton_data_mQTT = 1;
     }
-    if (payloadMessage == 0)
+    if ((*payload - 48) == 0)
     {
       len = length;
       allRelayOn = false;
@@ -493,14 +786,14 @@ void Callback(char *topic, uint8_t *payload, unsigned int length)
   }
   else if (strcmp(topic, allRelayOff_topic) == 0)
   {
-    if (payloadMessage == 1)
+    if ((*payload - 48) == 1)
     {
       len = length;
       allRelayOff = true;
       allRelayOffButton = true;
       allRelayOffButton_data_mQTT = 1;
     }
-    if (payloadMessage == 0)
+    if ((*payload - 48) == 0)
     {
       len = length;
       allRelayOff = false;
@@ -508,97 +801,85 @@ void Callback(char *topic, uint8_t *payload, unsigned int length)
       allRelayOffButton_data_mQTT = 0;
     }
   }
-  else if (strcmp(topic, automation_topic) == 0)
-  {
-    if (payloadMessage == 1)
-    {
-      automation = true;
-      setValueOnManualToAutoFlag = true;
-    }
-    if (payloadMessage == 0)
-    {
-      automation = false;
-      setValueOnAutoTomanualFlag = true;
-    }
-  }
   else if (strcmp(topic, washRoom0_devices_topic) == 0)
   {
-    washRoom0_relay0_data_mQTT = payloadMessage;
+    washRoom0_relay0_data_mQTT = *payload - 48;
     washRoom0_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, washRoom1_light_topic) == 0)
   {
-    washRoom1_relay0_data_mQTT = payloadMessage;
+    washRoom1_relay0_data_mQTT = *payload - 48;
     washRoom1_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, washRoom1_exhaust_topic) == 0)
   {
-    washRoom1_relay1_data_mQTT = payloadMessage;
+    washRoom1_relay1_data_mQTT = *payload - 48;
     washRoom1_relay1_flag_mQTT = true;
   }
   else if (strcmp(topic, row0_light0_topic) == 0)
   {
-    row0_relay0_data_mQTT = payloadMessage;
+    int payloadData = *payload - 48;
+    row0_relay0_data_mQTT = payloadData;
     row0_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row0_light1_topic) == 0)
   {
-    row0_relay1_data_mQTT = payloadMessage;
+    row0_relay1_data_mQTT = *payload - 48;
     row0_relay1_flag_mQTT = true;
   }
   else if (strcmp(topic, mainRoomLight_topic) == 0)
   {
-    mainRoom_relay0_data_mQTT = payloadMessage;
+    mainRoom_relay0_data_mQTT = *payload - 48;
     mainRoom_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row1_light0_topic) == 0)
   {
-    row1_relay0_data_mQTT = payloadMessage;
+    row1_relay0_data_mQTT = *payload - 48;
     row1_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row1_light1_topic) == 0)
   {
-    row1_relay1_data_mQTT = payloadMessage;
+    row1_relay1_data_mQTT = *payload - 48;
     row1_relay1_flag_mQTT = true;
   }
   else if (strcmp(topic, row2_light0_topic) == 0)
   {
-    row2_relay0_data_mQTT = payloadMessage;
+    row2_relay0_data_mQTT = *payload - 48;
     row2_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row2_light1_topic) == 0)
   {
-    row2_relay1_data_mQTT = payloadMessage;
+    row2_relay1_data_mQTT = *payload - 48;
     row2_relay1_flag_mQTT = true;
   }
   else if (strcmp(topic, row3_light0_topic) == 0)
   {
-    row3_relay0_data_mQTT = payloadMessage;
+    row3_relay0_data_mQTT = *payload - 48;
     row3_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row3_light1_topic) == 0)
   {
-    row3_relay1_data_mQTT = payloadMessage;
+    row3_relay1_data_mQTT = *payload - 48;
     row3_relay1_flag_mQTT = true;
   }
   else if (strcmp(topic, row4_light0_topic) == 0)
   {
-    row4_relay0_data_mQTT = payloadMessage;
+    row4_relay0_data_mQTT = *payload - 48;
     row4_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row4_light1_topic) == 0)
   {
-    row4_relay1_data_mQTT = payloadMessage;
+    row4_relay1_data_mQTT = *payload - 48;
     row4_relay1_flag_mQTT = true;
   }
   else if (strcmp(topic, row5_light0_topic) == 0)
   {
-    row5_relay0_data_mQTT = payloadMessage;
+    row5_relay0_data_mQTT = *payload - 48;
     row5_relay0_flag_mQTT = true;
   }
   else if (strcmp(topic, row5_light1_topic) == 0)
   {
-    row5_relay1_data_mQTT = payloadMessage;
+    row5_relay1_data_mQTT = *payload - 48;
     row5_relay1_flag_mQTT = true;
   }
 }
@@ -612,17 +893,6 @@ void Controller(const uint8_t _mqttMessage, const uint8_t _device)
     {
       digitalWrite(_device, ON);
       delay(100);
-      Serial.print(F("\n"));
-      Serial.print(F("GPIO: "));
-      Serial.print(_device);
-      Serial.print(F(" Turned ON"));
-    }
-    else if (_pinStatus == ON)
-    {
-      Serial.print(F("\n"));
-      Serial.print(F("GPIO: "));
-      Serial.print(_device);
-      Serial.print(F(" Already Turned ON!!!!!!!"));
     }
   }
   if (_mqttMessage == 0)
@@ -632,17 +902,6 @@ void Controller(const uint8_t _mqttMessage, const uint8_t _device)
     {
       digitalWrite(_device, OFF);
       delay(100);
-      Serial.print(F("\n"));
-      Serial.print(F("GPIO: "));
-      Serial.print(_device);
-      Serial.print(F(" Turned OFF"));
-    }
-    else if (_pinStatus == OFF)
-    {
-      Serial.print(F("\n"));
-      Serial.print(F("GPIO: "));
-      Serial.print(_device);
-      Serial.print(F(" Already Turned OFF!!!!!!!"));
     }
   }
 }
@@ -650,44 +909,23 @@ void Controller(const uint8_t _mqttMessage, const uint8_t _device)
 void TopicSubscription()
 {
   mqttClient.publish(deviceStatus_topic, "Connected", true);
-  mqttClient.subscribe(automation_topic);
-  mqttClient.subscribe(allRelayOn_topic);
-  mqttClient.subscribe(allRelayOff_topic);
-  mqttClient.subscribe(washRoom0_devices_topic);
-  mqttClient.subscribe(washRoom1_light_topic);
-  mqttClient.subscribe(washRoom1_exhaust_topic);
-  mqttClient.subscribe(row0_light0_topic);
-  mqttClient.subscribe(row0_light1_topic);
-  mqttClient.subscribe(mainRoomLight_topic);
-  mqttClient.subscribe(row1_light0_topic);
-  mqttClient.subscribe(row1_light1_topic);
-  mqttClient.subscribe(row2_light0_topic);
-  mqttClient.subscribe(row2_light1_topic);
-  mqttClient.subscribe(row3_light0_topic);
-  mqttClient.subscribe(row3_light1_topic);
-  mqttClient.subscribe(row4_light0_topic);
-  mqttClient.subscribe(row4_light1_topic);
-  mqttClient.subscribe(row5_light0_topic);
-  mqttClient.subscribe(row5_light1_topic);
-  mqttClient.subscribe(luxSensor0_topic);
+  for (uint8_t i = 0; i < sizeof(subscriptionToics) / sizeof(subscriptionToics[0]); i++)
+  {
+    mqttClient.subscribe(subscriptionToics[i]);
+  }
 }
 
 void AllRelayOnAction()
 {
+  Serial.print(F("\n"));
+  Serial.print(F("AllRelayOnAction Called: "));
   uint8_t data[1] = {'1'};
   uint8_t *message = data;
   uint8_t data1[1] = {'0'};
   uint8_t *message1 = data1;
-  if (!allRelayOffButton)
-  {
-    Serial.print(F("\n"));
-    Serial.print(F("AllRelayOff Button already turned OFF.."));
-  }
   if (allRelayOffButton)
   {
     mqttClient.publish(allRelayOff_topic, message1, len, false);
-    Serial.print(F("\n"));
-    Serial.print(F("AllRelayOff Button turned OFF.."));
     allRelayOffButton = false;
   }
   mqttClient.publish(washRoom0_devices_topic, message, len, true);
@@ -713,16 +951,9 @@ void AllRelayOffAction()
 {
   uint8_t data[1] = {'0'};
   uint8_t *message = data;
-  if (!allRelayOnButton)
-  {
-    Serial.print(F("\n"));
-    Serial.print(F("AllrelayOn Button already turned OFF..."));
-  }
   if (allRelayOnButton)
   {
     mqttClient.publish(allRelayOn_topic, message, len, false);
-    Serial.print(F("\n"));
-    Serial.print(F("AllrelayOn Button turned OFF..."));
     allRelayOnButton = false;
   }
   mqttClient.publish(washRoom0_devices_topic, message, len, true);
@@ -746,358 +977,113 @@ void AllRelayOffAction()
 
 void AutomaticControl()
 {
+  UpdateInputPinStatus();
   /************************************ Row0 with 2 Outputs *************************************************/
-  device[0].controller(&row0_sensor0_status, &row0_sensor1_status, &row0_sensor2_status, &row0_sensor3_status, &row0_sensor4_status, &row0_light0, row0_light0_topic, &luxSensor_testValue, deviceDelay);
-  device[1].controller(&row0_sensor5_status, &row0_sensor6_status, &row0_sensor7_status, &row0_sensor8_status, &row0_sensor9_status, &row0_light1, row0_light1_topic, &luxSensor_testValue, deviceDelay);
+  if (row0_light0_pattern_flag_mQTT)
+  {
+    device[0].controller(&row0_sensor0_status, &row0_sensor1_status, &row0_sensor2_status, &row0_sensor3_status, &row0_sensor4_status, &row0_light0, row0_light0_topic, &luxSensor_testValue, individualDelayTime[0]);
+  }
+
+  if (row0_light1_pattern_flag_mQTT)
+  {
+    device[1].controller(&row0_sensor5_status, &row0_sensor6_status, &row0_sensor7_status, &row0_sensor8_status, &row0_sensor9_status, &row0_light1, row0_light1_topic, &luxSensor_testValue, individualDelayTime[1]);
+  }
   /**********************************************************************************************************/
 
   /************************************ Row1 with 2 Outputs *************************************************/
-  device[2].controller(&row1_sensor0_status, &row1_sensor1_status, &row1_sensor2_status, &row1_sensor3_status, &row1_light0, row1_light0_topic, &luxSensor_testValue, deviceDelay);
-  device[3].controller(&row1_sensor4_status, &row1_sensor5_status, &row1_sensor6_status, &row1_light1, row1_light1_topic, &luxSensor_testValue, deviceDelay);
+  if (row1_light0_pattern_flag_mQTT)
+  {
+    device[2].controller(&row1_sensor0_status, &row1_sensor1_status, &row1_sensor2_status, &row1_sensor3_status, &row1_light0, row1_light0_topic, &luxSensor_testValue, individualDelayTime[2]);
+  }
+  if (row1_light1_pattern_flag_mQTT)
+  {
+    device[3].controller(&row1_sensor4_status, &row1_sensor5_status, &row1_sensor6_status, &row1_light1, row1_light1_topic, &luxSensor_testValue, individualDelayTime[3]);
+  }
   /**********************************************************************************************************/
 
   /************************************ Row2 and Row3 with 2 outputs(Row3) **********************************/
-  device[4].controller(&row2_sensor0_status, &row2_sensor1_status, &row3_sensor0_status, &row3_sensor1_status, &row3_light0, row3_light0_topic, &luxSensor_testValue, deviceDelay);
-  device[5].controller(&row2_sensor2_status, &row2_sensor3_status, &row2_sensor4_status, &row3_sensor2_status, &row3_sensor3_status, &row3_light1, row3_light1_topic, &luxSensor_testValue, deviceDelay);
+  if (row2_light0_pattern_flag_mQTT)
+  {
+    device[4].controller(&row2_sensor0_status, &row2_sensor1_status, &row2_light0, row2_light0_topic, &luxSensor_testValue, individualDelayTime[4]);
+  }
+  if (row2_light1_pattern_flag_mQTT)
+  {
+    device[5].controller(&row2_sensor2_status, &row2_sensor3_status, &row2_sensor4_status, &row2_light1, row2_light1_topic, &luxSensor_testValue, individualDelayTime[5]);
+  }
+  if (row3_light0_pattern_flag_mQTT)
+  {
+    device[6].controller(&row3_sensor0_status, &row3_sensor1_status, &row3_light0, row3_light0_topic, &luxSensor_testValue, individualDelayTime[6]);
+  }
+  if (row3_light1_pattern_flag_mQTT)
+  {
+    device[7].controller(&row3_sensor2_status, &row3_sensor3_status, &row3_light1, row3_light1_topic, &luxSensor_testValue, individualDelayTime[7]);
+  }
   /**********************************************************************************************************/
 
   /************************************ Row4 with 2 Outputs *************************************************/
-  device[6].controller(&row4_sensor0_status, &row4_sensor1_status, &row4_sensor2_status, &row4_light0, row4_light0_topic, &luxSensor_testValue, deviceDelay);
-  device[7].controller(&row4_sensor3_status, &row4_sensor4_status, &row4_sensor5_status, &row4_light1, row4_light1_topic, &luxSensor_testValue, deviceDelay);
+  if (row4_light0_pattern_flag_mQTT)
+  {
+    device[8].controller(&row4_sensor0_status, &row4_sensor1_status, &row4_sensor2_status, &row4_light0, row4_light0_topic, &luxSensor_testValue, individualDelayTime[8]);
+  }
+  if (row4_light1_pattern_flag_mQTT)
+  {
+    device[9].controller(&row4_sensor3_status, &row4_sensor4_status, &row4_sensor5_status, &row4_light1, row4_light1_topic, &luxSensor_testValue, individualDelayTime[9]);
+  }
   /**********************************************************************************************************/
 
   /************************************ Row5 with 2 Outputs *************************************************/
-  device[8].controller(&row5_sensor0_status, &row5_sensor1_status, &row5_sensor2_status, &row5_light0, row5_light0_topic, &luxSensor_testValue, deviceDelay);
-  device[9].controller(&row5_sensor3_status, &row5_sensor4_status, &row5_sensor5_status, &row5_sensor6_status, &row5_light1, row5_light1_topic, &luxSensor_testValue, deviceDelay);
+  if (row5_light0_pattern_flag_mQTT)
+  {
+    device[10].controller(&row5_sensor0_status, &row5_sensor1_status, &row5_sensor2_status, &row5_light0, row5_light0_topic, &luxSensor_testValue, individualDelayTime[10]);
+  }
+  if (row5_light1_pattern_flag_mQTT)
+  {
+    device[11].controller(&row5_sensor3_status, &row5_sensor4_status, &row5_sensor5_status, &row5_sensor6_status, &row5_light1, row5_light1_topic, &luxSensor_testValue, individualDelayTime[11]);
+  }
   /**********************************************************************************************************/
 
   /************************************ MainRoom Light single Output ****************************************/
-  device[10].controller(&mainRoom_sensor_status, &mainRoomLight, mainRoomLight_topic, &luxSensor0_data_mQTT, deviceDelay);
+  if (mainroom_light_pattern_flag_mQTT)
+  {
+    device[12].controller(&mainRoom_sensor_status, &mainRoomLight, mainRoomLight_topic, &luxSensor0_data_mQTT, individualDelayTime[12]);
+  }
   /**********************************************************************************************************/
 
   /************************************ WashRoom0 single Output *********************************************/
-  device[11].controller(&washRoom0_sensor0_status, &washRoom0_devices, washRoom0_devices_topic, &luxSensor_testValue, deviceDelay);
+  if (washroom0_devices_pattern_flag_mQTT)
+  {
+    device[13].controller(&washRoom0_sensor0_status, &washRoom0_devices, washRoom0_devices_topic, &luxSensor_testValue, individualDelayTime[13]);
+  }
   /**********************************************************************************************************/
 
   /************************************ WashRoom1 with 2 Output *********************************************/
-  device[12].controller(&washRoom1_sensor0_status, &washRoom1_sensor1_status, &washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_light, washRoom1_light_topic, &luxSensor_testValue, deviceDelay);
-  device[13].controller(&washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_exhaust, washRoom1_exhaust_topic, &luxSensor_testValue, deviceDelay);
+  if (washroom1_light_pattern_flag_mQTT)
+  {
+    device[14].controller(&washRoom1_sensor0_status, &washRoom1_sensor1_status, &washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_light, washRoom1_light_topic, &luxSensor_testValue, individualDelayTime[14]);
+  }
+  if (washroom1_exhaust_pattern_flag_mQTT)
+  {
+    device[15].controller(&washRoom1_sensor2_status, &washRoom1_sensor3_status, &washRoom1_exhaust, washRoom1_exhaust_topic, &luxSensor_testValue, individualDelayTime[15]);
+  }
   /**********************************************************************************************************/
-
-  WashRoom0Relay0Controller();
-  WashRoom1Relay0Controller();
-  WashRoom1Relay1Controller();
-  MainRoomRelay0Controller();
-  Row0Relay0Controller();
-  Row0Relay1Controller();
-  Row1Relay0Controller();
-  Row1Relay1Controller();
-  Row2Relay0Controller();
-  Row2Relay1Controller();
-  Row3Relay0Controller();
-  Row3Relay1Controller();
-  Row4Relay0Controller();
-  Row4Relay1Controller();
-  Row5Relay0Controller();
-  Row5Relay1Controller();
 }
 
-void ManualControl()
+void RelayController()
 {
-  if (allRelayOn)
+  for (uint8_t i = 0; i < (sizeof(relayStatusMQTTFlag) / sizeof(relayStatusMQTTFlag[0])); i++)
   {
-    AllRelayOnAction();
-  }
-  if (allRelayOff)
-  {
-    AllRelayOffAction();
-  }
-  WashRoom0Relay0Controller();
-  WashRoom1Relay0Controller();
-  WashRoom1Relay1Controller();
-  MainRoomRelay0Controller();
-  Row0Relay0Controller();
-  Row0Relay1Controller();
-  Row1Relay0Controller();
-  Row1Relay1Controller();
-  Row2Relay0Controller();
-  Row2Relay1Controller();
-  Row3Relay0Controller();
-  Row3Relay1Controller();
-  Row4Relay0Controller();
-  Row4Relay1Controller();
-  Row5Relay0Controller();
-  Row5Relay1Controller();
-}
-
-void WashRoom0Relay0Controller()
-{
-  if (washRoom0_relay0_flag_mQTT)
-  {
-    Controller(washRoom0_relay0_data_mQTT, washRoom0_devices);
-    washRoom0_relay0_flag_mQTT = false;
-    if (washRoom0_relay0_data_mQTT == 1)
+    if (relayStatusMQTTFlag[i])
     {
-      AllRelayOffButtonHandler();
-    }
-    else if (washRoom0_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void WashRoom1Relay0Controller()
-{
-  if (washRoom1_relay0_flag_mQTT)
-  {
-    Controller(washRoom1_relay0_data_mQTT, washRoom1_light);
-    washRoom1_relay0_flag_mQTT = false;
-    if (washRoom1_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (washRoom1_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void WashRoom1Relay1Controller()
-{
-  if (washRoom1_relay1_flag_mQTT)
-  {
-    Controller(washRoom1_relay1_data_mQTT, washRoom1_exhaust);
-    washRoom1_relay1_flag_mQTT = false;
-    if (washRoom1_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (washRoom1_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void MainRoomRelay0Controller()
-{
-  if (mainRoom_relay0_flag_mQTT)
-  {
-    Controller(mainRoom_relay0_data_mQTT, mainRoomLight);
-    mainRoom_relay0_flag_mQTT = false;
-    if (mainRoom_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (mainRoom_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row0Relay0Controller()
-{
-  if (row0_relay0_flag_mQTT)
-  {
-    Controller(row0_relay0_data_mQTT, row0_light0);
-    row0_relay0_flag_mQTT = false;
-    if (row0_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row0_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row0Relay1Controller()
-{
-  if (row0_relay1_flag_mQTT)
-  {
-    Controller(row0_relay1_data_mQTT, row0_light1);
-    row0_relay1_flag_mQTT = false;
-    if (row0_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row0_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row1Relay0Controller()
-{
-  if (row1_relay0_flag_mQTT)
-  {
-    Controller(row1_relay0_data_mQTT, row1_light0);
-    row1_relay0_flag_mQTT = false;
-    if (row1_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row1_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row1Relay1Controller()
-{
-  if (row1_relay1_flag_mQTT)
-  {
-    Controller(row1_relay1_data_mQTT, row1_light1);
-    row1_relay1_flag_mQTT = false;
-    if (row1_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row1_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row2Relay0Controller()
-{
-  if (row2_relay0_flag_mQTT)
-  {
-    Controller(row2_relay0_data_mQTT, row2_light0);
-    row2_relay0_flag_mQTT = false;
-    if (row2_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row2_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row2Relay1Controller()
-{
-  if (row2_relay1_flag_mQTT)
-  {
-    Controller(row2_relay1_data_mQTT, row2_light1);
-    row2_relay1_flag_mQTT = false;
-    if (row2_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row2_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row3Relay0Controller()
-{
-  if (row3_relay0_flag_mQTT)
-  {
-    Controller(row3_relay0_data_mQTT, row3_light0);
-    row3_relay0_flag_mQTT = false;
-    if (row3_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row3_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row3Relay1Controller()
-{
-  if (row3_relay1_flag_mQTT)
-  {
-    Controller(row3_relay1_data_mQTT, row3_light1);
-    row3_relay1_flag_mQTT = false;
-    if (row3_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row3_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row4Relay0Controller()
-{
-  if (row4_relay0_flag_mQTT)
-  {
-    Controller(row4_relay0_data_mQTT, row4_light0);
-    row4_relay0_flag_mQTT = false;
-    if (row4_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row4_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row4Relay1Controller()
-{
-  if (row4_relay1_flag_mQTT)
-  {
-    Controller(row4_relay1_data_mQTT, row4_light1);
-    row4_relay1_flag_mQTT = false;
-    if (row4_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row4_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row5Relay0Controller()
-{
-  if (row5_relay0_flag_mQTT)
-  {
-    Controller(row5_relay0_data_mQTT, row5_light0);
-    row5_relay0_flag_mQTT = false;
-    if (row5_relay0_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row5_relay0_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
-    }
-  }
-}
-
-void Row5Relay1Controller()
-{
-  if (row5_relay1_flag_mQTT)
-  {
-    Controller(row5_relay1_data_mQTT, row5_light1);
-    row5_relay1_flag_mQTT = false;
-    if (row5_relay1_data_mQTT == 1)
-    {
-      AllRelayOffButtonHandler();
-    }
-    else if (row5_relay1_data_mQTT == 0)
-    {
-      AllRelayOnButtonHandler();
+      Controller(relayStatusMQTT[i], output[i]);
+      relayStatusMQTTFlag[i] = false;
+      if (relayStatusMQTT[i] == 1)
+      {
+        AllRelayOffButtonHandler();
+      }
+      else if (relayStatusMQTT[i] == 0)
+      {
+        AllRelayOnButtonHandler();
+      }
     }
   }
 }
@@ -1105,7 +1091,6 @@ void Row5Relay1Controller()
 Automation::Automation()
 {
   startInterval = 0UL;
-  debounceDelay = 800UL;
   secondsInOneMinute = 60UL;
   milliSecondsInOneSecond = 1000UL;
   deviceOn = false;
@@ -1129,11 +1114,15 @@ void Automation::controller(uint8_t *sensorStatus0, const uint8_t *outputPin, co
       if (digitalRead(*outputPin) == OFF)
       {
         mqttClient.publish(topic, message, 1, true);
+        Serial.print(F("\n"));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Turned ON"));
       }
       if (digitalRead(*outputPin) == ON)
       {
         Serial.print(F("\n"));
-        Serial.print(F("Already Turned ON..."));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Already Turned ON"));
       }
       deviceOn = true;
       keepDeviceOn = true;
@@ -1197,11 +1186,15 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, cons
       if (digitalRead(*outputPin) == OFF)
       {
         mqttClient.publish(topic, message, 1, true);
+        Serial.print(F("\n"));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Turned ON"));
       }
       if (digitalRead(*outputPin) == ON)
       {
         Serial.print(F("\n"));
-        Serial.print(F("Already Turned ON..."));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Already Turned ON..."));
       }
       deviceOn = true;
       keepDeviceOn = true;
@@ -1264,11 +1257,15 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
       if (digitalRead(*outputPin) == OFF)
       {
         mqttClient.publish(topic, message, 1, true);
+        Serial.print(F("\n"));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Turned ON"));
       }
       if (digitalRead(*outputPin) == ON)
       {
         Serial.print(F("\n"));
-        Serial.print(F("Already Turned ON..."));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Already Turned ON..."));
       }
       deviceOn = true;
       keepDeviceOn = true;
@@ -1331,11 +1328,15 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
       if (digitalRead(*outputPin) == OFF)
       {
         mqttClient.publish(topic, message, 1, true);
+        Serial.print(F("\n"));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Turned ON"));
       }
       if (digitalRead(*outputPin) == ON)
       {
         Serial.print(F("\n"));
-        Serial.print(F("Already Turned ON..."));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Already Turned ON..."));
       }
       deviceOn = true;
       keepDeviceOn = true;
@@ -1398,11 +1399,15 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
       if (digitalRead(*outputPin) == OFF)
       {
         mqttClient.publish(topic, message, 1, true);
+        Serial.print(F("\n"));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Turned ON"));
       }
       if (digitalRead(*outputPin) == ON)
       {
         Serial.print(F("\n"));
-        Serial.print(F("Already Turned ON..."));
+        Serial.print(*outputPin);
+        Serial.print(F(" :Already Turned ON..."));
       }
       deviceOn = true;
       keepDeviceOn = true;
@@ -1454,12 +1459,8 @@ void Automation::controller(uint8_t *sensorStatus0, uint8_t *sensorStatus1, uint
 
 void Automation::setDefaultValue()
 {
-  Serial.print(F("\n"));
-  Serial.print(F("setValueOnAutoToManual::"));
-  Serial.print(F(" Objects Value Set To Default.."));
   startInterval = 0UL;
-  debounceDelay = 800UL;
-  secondsInOneMinute = 60UL;
+  secondsInOneMinute = 1UL;
   milliSecondsInOneSecond = 1000UL;
   deviceOn = false;
   keepDeviceOn = false;
@@ -1520,13 +1521,6 @@ void AllRelayOnButtonHandler()
   if (allRelayOnButton_data_mQTT == 1)
   {
     mqttClient.publish(allRelayOn_topic, message, len, false);
-    Serial.print(F("\n"));
-    Serial.print(F("AllrelayOn Button turned OFF..."));
-  }
-  else if (allRelayOnButton_data_mQTT == 0)
-  {
-    Serial.print(F("\n"));
-    Serial.print(F("AllRelayOn Button already turned OFF.."));
   }
 }
 
@@ -1537,13 +1531,6 @@ void AllRelayOffButtonHandler()
   if (allRelayOffButton_data_mQTT == 1)
   {
     mqttClient.publish(allRelayOff_topic, message, len, false);
-    Serial.print(F("\n"));
-    Serial.print(F("AllRelayOff Button turned OFF.."));
-  }
-  else if (allRelayOffButton_data_mQTT == 0)
-  {
-    Serial.print(F("\n"));
-    Serial.print(F("AllRelayOff Button already turned OFF.."));
   }
 }
 
@@ -1572,5 +1559,120 @@ void UpdateInputPinStatus()
   for (uint8_t i = 0; i < (sizeof(input) / sizeof(input[0])); i++)
   {
     input_status[i] = digitalRead(input[i]);
+  }
+}
+
+PIRtoMQTT::PIRtoMQTT()
+{
+  _triggered = false;
+}
+
+void PIRtoMQTT::sendToMQTT(byte _inputPin, const char *_topic)
+{
+  byte _pinStatus = digitalRead(_inputPin);
+  if (!_triggered)
+  {
+    if (_pinStatus == HIGH)
+    {
+      _triggered = true;
+      uint8_t data[1] = {'1'};
+      uint8_t *message = data;
+      mqttClient.publish(_topic, message, 1, true);
+    }
+  }
+  if (_triggered)
+  {
+    if (_pinStatus == LOW)
+    {
+      _triggered = false;
+      uint8_t data[1] = {'0'};
+      uint8_t *message = data;
+      mqttClient.publish(_topic, message, 1, true);
+    }
+  }
+}
+
+void sendPirToMQTT()
+{
+  pirSensor[0].sendToMQTT(row0_sensor0, row0_sensor0_topic);
+  pirSensor[1].sendToMQTT(row0_sensor1, row0_sensor1_topic);
+  pirSensor[2].sendToMQTT(row0_sensor2, row0_sensor2_topic);
+  pirSensor[3].sendToMQTT(row0_sensor3, row0_sensor3_topic);
+  pirSensor[4].sendToMQTT(row0_sensor4, row0_sensor4_topic);
+  pirSensor[5].sendToMQTT(row0_sensor5, row0_sensor5_topic);
+  pirSensor[6].sendToMQTT(row0_sensor6, row0_sensor6_topic);
+  pirSensor[7].sendToMQTT(row0_sensor7, row0_sensor7_topic);
+  pirSensor[8].sendToMQTT(row0_sensor8, row0_sensor8_topic);
+  pirSensor[9].sendToMQTT(row0_sensor9, row0_sensor9_topic);
+
+  pirSensor[10].sendToMQTT(row1_sensor0, row1_sensor0_topic);
+  pirSensor[11].sendToMQTT(row1_sensor1, row1_sensor1_topic);
+  pirSensor[12].sendToMQTT(row1_sensor2, row1_sensor2_topic);
+  pirSensor[13].sendToMQTT(row1_sensor3, row1_sensor3_topic);
+  pirSensor[14].sendToMQTT(row1_sensor4, row1_sensor4_topic);
+  pirSensor[15].sendToMQTT(row1_sensor5, row1_sensor5_topic);
+  pirSensor[16].sendToMQTT(row1_sensor6, row1_sensor6_topic);
+
+  pirSensor[17].sendToMQTT(row2_sensor0, row2_sensor0_topic);
+  pirSensor[18].sendToMQTT(row2_sensor1, row2_sensor1_topic);
+  pirSensor[19].sendToMQTT(row2_sensor2, row2_sensor2_topic);
+  pirSensor[20].sendToMQTT(row2_sensor3, row2_sensor3_topic);
+  pirSensor[21].sendToMQTT(row2_sensor4, row2_sensor4_topic);
+
+  pirSensor[22].sendToMQTT(row3_sensor0, row3_sensor0_topic);
+  pirSensor[23].sendToMQTT(row3_sensor1, row3_sensor1_topic);
+  pirSensor[24].sendToMQTT(row3_sensor2, row3_sensor2_topic);
+  pirSensor[25].sendToMQTT(row3_sensor3, row3_sensor3_topic);
+
+  pirSensor[26].sendToMQTT(row4_sensor0, row4_sensor0_topic);
+  pirSensor[27].sendToMQTT(row4_sensor1, row4_sensor1_topic);
+  pirSensor[28].sendToMQTT(row4_sensor2, row4_sensor2_topic);
+  pirSensor[29].sendToMQTT(row4_sensor3, row4_sensor3_topic);
+  pirSensor[30].sendToMQTT(row4_sensor4, row4_sensor4_topic);
+  pirSensor[31].sendToMQTT(row4_sensor5, row4_sensor5_topic);
+
+  pirSensor[32].sendToMQTT(row5_sensor0, row5_sensor0_topic);
+  pirSensor[33].sendToMQTT(row5_sensor1, row5_sensor1_topic);
+  pirSensor[34].sendToMQTT(row5_sensor2, row5_sensor2_topic);
+  pirSensor[35].sendToMQTT(row5_sensor3, row5_sensor3_topic);
+  pirSensor[36].sendToMQTT(row5_sensor4, row5_sensor4_topic);
+  pirSensor[37].sendToMQTT(row5_sensor5, row5_sensor5_topic);
+  pirSensor[38].sendToMQTT(row5_sensor6, row5_sensor6_topic);
+
+  pirSensor[39].sendToMQTT(washRoom0_sensor0, washRoom0_sensor0_topic);
+
+  pirSensor[40].sendToMQTT(mainRoom_sensor, mainRoom_sensor_topic);
+
+  pirSensor[41].sendToMQTT(washRoom1_sensor0, washRoom1_sensor0_topic);
+  pirSensor[42].sendToMQTT(washRoom1_sensor1, washRoom1_sensor1_topic);
+  pirSensor[43].sendToMQTT(washRoom1_sensor2, washRoom1_sensor2_topic);
+  pirSensor[44].sendToMQTT(washRoom1_sensor3, washRoom1_sensor3_topic);
+}
+
+void PatternController()
+{
+  for (uint8_t i = 0; i < sizeof(patternFlag) / sizeof(patternFlag[0]); i++)
+  {
+    if (!patternFlag[i])
+    {
+      if (relayStatusPattern[i] == 1)
+      {
+        uint8_t data[1] = {'1'};
+        uint8_t *message = data;
+        if (relayStatusPattern[i] != relayStatusMQTT[i])
+        {
+          mqttClient.publish(subscriptionToics[i], message, len, true);
+        }
+      }
+      else if (relayStatusPattern[i] == 0)
+      {
+        uint8_t data[1] = {'0'};
+        uint8_t *message = data;
+        if (relayStatusPattern[i] != relayStatusMQTT[i])
+        {
+          mqttClient.publish(subscriptionToics[i], message, len, true);
+        }
+      }
+    }
   }
 }
